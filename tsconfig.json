@@ -1,8 +1,9 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    "checkJs": true, // 편집기가 src 폴더의 모든 js 파일을 읽어 실시간으로 형식 오류 피드백을 제공한다.
-    "noEmit": true, // ts가 js 파일을 예전 버전으로 변환하지 않게 한다.
+    "checkJs": false, 
+    "allowJs": true, 
+    "noEmitOnError": false,
 
     // File Layout
     "rootDir": "./src",
