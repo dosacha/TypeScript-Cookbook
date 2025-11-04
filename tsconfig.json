@@ -1,9 +1,14 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
+    "typeRoots": [
+      "./typings",
+      "./node_modules/@types"
+    ],
+
     "checkJs": false, 
     "allowJs": true, 
-    "noEmitOnError": false,
+    "noEmitOnError": false, // 프로젝트에 오류가 얼마나 있든지 관계없이 ts는 결과 파일을 생성
 
     // File Layout
     "rootDir": "./src",
@@ -13,7 +18,10 @@
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
     "target": "esnext",
-    "types": [],
+    "types": [
+      "node",
+      "jest"
+    ],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
