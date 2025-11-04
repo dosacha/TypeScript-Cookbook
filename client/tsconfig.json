@@ -1,0 +1,24 @@
+// client/tsconfig.json
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "lib": [ // DOM을 추가하여 브라우저와 관련된 모든 형식 정의를 이용한다.
+            "DOM",
+            "ESNext"
+        ],
+        "module": "ESNext",
+        "rootDir": "./",
+        "moduleResolution": "node",
+        "types": [], // "node"를 제거한다.
+        "outDir": "../dist/client",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true
+    },
+    "references": [
+        {
+            "path": "../shared/tsconfig.json"
+        }
+    ]
+}

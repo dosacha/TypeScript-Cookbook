@@ -1,0 +1,25 @@
+// server/tsconfig.json
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "lib": [
+            "ESNext"
+        ],
+        "module": "commonjs", // 모든 import, export 구문은 각각 대응하는 CommonJS 코드로 변환된다.
+        "rootDir": "./",
+        "moduleResolution": "node",
+        "types": [ // node를 전역으로 포함하면, 전역으로 제공되는 require, process 및 기타 Node.js 전용 형식 정보를 얻게 된다.
+            "node"
+        ],
+        "outDir": "../dist/server",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true
+    },
+    "references": [
+        {
+            "path": "../shared/tsconfig.json"
+        }
+    ]
+}

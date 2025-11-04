@@ -1,0 +1,16 @@
+// shared/tsconfig.json
+{
+    "compilerOptions": {
+        "composite": true,
+        "target": "ESNext",
+        "module": "ESNext",
+        "rootDir": "../shared",
+        "moduleResolution": "node",
+        "types": [],
+        "outDir": "../dist/shared",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true
+    }
+}
