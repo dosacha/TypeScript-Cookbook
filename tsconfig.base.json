@@ -1,0 +1,12 @@
+// tsconfig.base.json
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "outDir": "./dist",
+        "skipDefaultLibCheck": true
+    }
+}

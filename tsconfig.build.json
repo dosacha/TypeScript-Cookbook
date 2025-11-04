@@ -1,0 +1,16 @@
+// tsconfig.build.json
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": [
+      "node"
+    ],
+    "rootDirs": [
+      "test"
+    ],    
+  },
+  "exclude": [
+    "**/*.test.ts",
+    "**/test/**"
+  ]
+}
