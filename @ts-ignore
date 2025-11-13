@@ -1,0 +1,2 @@
+// @ts-ignore
+import _ from "https://esm.sh/lodash@4.17.21"

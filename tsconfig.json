@@ -2,6 +2,14 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "skipLibCheck": true,
+    "target": "esnext",
+    "module": "esnext",
+    "paths": {
+      "https://esm.sh/lodash@4.17.21": [
+        "./node_modules/@types/lodash/index.d.ts"
+      ]
+    },
     "types": [
       "node",
       "mocha"

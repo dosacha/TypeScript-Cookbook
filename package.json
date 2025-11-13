@@ -12,11 +12,14 @@
   "devDependencies": {
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.20",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.2",
+    "preact": "^10.27.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "undici-types": "^7.16.0"
   },
   "dependencies": {
     "express": "^5.1.0",

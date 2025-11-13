@@ -6,7 +6,7 @@
       "node"
     ],
     "rootDirs": [
-      "test"
+      "src"
     ],    
   },
   "exclude": [
