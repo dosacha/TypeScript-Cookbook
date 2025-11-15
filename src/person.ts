@@ -4,6 +4,8 @@ type Person = {
     age: number;
 };
 
-function printPerson(person: Person){
+function printPerson(person: Person) {
     console.log(person.name);
 }
+
+export { Person, printPerson };
