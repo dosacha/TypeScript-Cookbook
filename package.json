@@ -17,6 +17,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@tsconfig/node18-strictest-esm": "^1.0.1",
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.20",
