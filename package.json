@@ -1,7 +1,7 @@
 {
   "name": "typescript_cookbook",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "exports": {
     ".": {
       "import": "./esm/index.js",
