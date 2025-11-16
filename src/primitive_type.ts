@@ -1,45 +1,31 @@
 // primitive_type.ts
-
-// 형식 추론
-let aNumber = 2;
-// aNumver: number
-
-// 형식 애너테이션
-let anotherNumber: number = 3;
-// anotherNumber: number
+const me: any = "Stefan"; // 좋음!
+const name: string = me; // 시스템상 문제는 없지만 나쁨.
+const age: number = me;
 
 type Person = {
     name: string;
     age: number;
 };
 
-type User = {
-    name: string;
-    age: number;
-    id: number;
-};
-
-// 추론됨!
-// 반환 형식은 { name: string, age: number };
-function createPerson(): Person {
-    return{ name: "Stefan", age: 39};
-}
-
-// 애너테이션 사용! 형식이 호환되는지 검사해야 함
 function printPerson(person: Person){
-    console.log(person.name, person.age);
+    for(let key in person){
+        console.log(`${key}: ${person[key]}`);
+        // 'string'형식은 'Perosn'의 ----^
+        // 인덱스 형식으로 사용할 수 없으므로, key는 암묵적으로 'any' 형식임. (7053)
+    }
 }
 
-const user: User = {
-    name: "Stefan",
-    age: 40,
-    id: 815,
-};
+// any로 형식 검사를 잠시 중단.
+function printPerson2(person: any){
+    for(let key in person){
+        console.log(`${key}: ${person[key]}`);
+    }
+}
 
-// 추론됨!
-const me: Person = createPerson();
-
-// 모두 동작함
-printPerson(me);
-printPerson(user);
-
+// ts의 제한과 형식 어서션을 이용해 올바른 형식을 추가.
+function printPerson3(person: Person){
+    for(let key in person){
+        console.log(`${key}: ${person[key as keyof Person]}`);
+    }
+}

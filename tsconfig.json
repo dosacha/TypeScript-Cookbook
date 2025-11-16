@@ -1,22 +1,19 @@
-// tsconfig.json
 {
-  "extends": "./tsconfig.base.json",
+  "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
-    "skipLibCheck": true, // node_modules 내부 타입 정의(.d.ts) 검사를 건너뛰어 외부 라이브러리 타입 오류를 무시함
+    "skipLibCheck": true,
     "target": "esnext",
     "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "verbatimModuleSyntax": true,
+    "noImplicitAny": true,
     "paths": {
       "https://esm.sh/lodash@4.17.21": [
         "./node_modules/@types/lodash/index.d.ts"
       ]
     },
-    "types": [
-      "node",
-      "mocha"
-    ],
-    "rootDirs": [
-      "test",
-      "src"
-    ]
-  }
+    "types": ["node", "mocha"],
+    "rootDirs": ["test", "src"]
+  },
+  "exclude": ["dist", "node_modules"]
 }
