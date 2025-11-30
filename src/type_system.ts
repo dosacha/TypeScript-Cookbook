@@ -1,113 +1,94 @@
 // type_system.ts
 
-import { findPackageJSON } from "module";
+// 아래 상황에서는 area함수는 어려움 없이 형식을 구별한다.
+type Circle = {
+    radius: number;
+};
 
-// 장난감 가게의 데이터 모델을 만든다고 가정
-    type BoardGame = {
-        name: string;
-        price: number;
-        quantity: number;
-        minimumAge: number;
-        players: number;
-    };
+type Square = {
+    x: number;
+};
 
-    type Puzzle = {
-        name: string;
-        price: number;
-        quantity: number;
-        minimumAge: number;
-        players: number;
-    };
+type Triangle = {
+    x: number;
+    y: number;
+};
 
-    type Doll = {
-        name: string;
-        price: number;
-        quantity: number;
-        minimumAge: number;
-        meterial: string;
-    };
+type Shape = Circle | Square | Triangle;
 
-    type ToyBase = {
-        name: string;
-        price: number;
-        quantity: number;
-        minimumAge: number;
-    };
-
-    function printToy(toy: ToyBase){
+function area(shape: Shape){
+    if("radius" in shpae){
+        // ...
+    }else if("y" in shape){
+        // ...
+    }else{
         // ...
     }
+}
 
-    const doll: Doll = {
-        name: "Mickey Mouse",
-        price: 9.99,
-        quantity: 1000,
-        minimumAge: 2,
-        meterial: "plush",
-    };
+// 하지만  Rectangle에 필요한 프로퍼티가 Trinanlge의 프로퍼티와 같아서 문제가 발생한다.
+// 이런 상황에서는 유니온의 구성요소를 특정하기가 어렵다.
+type Circle2 = {
+    radius: number;
+};
 
-    printToy(doll); // 동작함
+type Square2 = {
+    x: number;
+};
 
-// 47 - printToy(doll) 에서 일부 정보를 잃어버린 채 오직 공통 프로퍼티만 출력된다.
-// 유니온 형식으로 모든 장난감을 대표할 수 있다.
-// 애너테이션이 있든 없든 ts는 각 값이 특정 형식과 호환되는지 확인한다. 객체라면 객체 형식에 정의된 추가 프로퍼트이 값도 여기에 포함된다.
-// 추론 기능을 통해 추가 프로퍼티ㅇ값은 구조적 형식 시스템의 하위 형식으로 할당된다. 하위 형식의 값은 상위 형식 집합의 일부이기도 하다.
-    // 유니온 Toy
-    type Toy = Doll | BoardGame | Puzzle;
+type Triangle2 = {
+    x: number;
+    y: number;
+};
 
-    function pruntToy2(toy: Toy){
-        // ...
+type Rectangle = {
+    x: number;
+    y: number;
+};
+
+type Shape2 = Circle2 | Square2 | Triangle2 | Rectangle;
+
+// 다음처럼 kind 프로퍼티를 모델에 추가하고 구성요소를 식별하는 "명확한" 리터럴 형식을 할당한다
+// 이 기법을 '구별된 유니온 형식'이라 부르며, 이를 활용해 유니온 형식의 각 구성요소를 명확하게 구별할 수 있다.
+type Circle3 = {
+    radius: number;
+    kind: "Circle";
+};
+
+type Square3 = {
+    x: number;
+    kind: "Square";
+};
+
+type Triangle3 = {
+    x: number;
+    y: number;
+    kind: "Triangle";
+};
+
+type Rectangle2 = {
+    x: number;
+    y: number;
+    kind: "Retangle";
+};
+
+type Shape3 = Circle3 | Square3 | Triangle3 | Rectangle2;
+
+function area2(shape: Shape3){
+    switch(shape.kind){
+        case "Circle":
+            // ...
+            break;
+        case "Square":
+            // ...
+            break;
+        case "Triangle":
+            // ...
+            break;
+        case "Retangle":
+            // ...
+            break;
+        default:
+            throw Error("not possible");
     }
-
-// 기본형으로 어디에서나 유니온 형식을 만들 수 있다.
-    function takesNumberOrString(value: number | string){
-        //  ...
-    }
-
-    takesNumberOrString(2); // 동작
-    takesNumberOrString("Hello"); // 동작
-
-// 장난감 가게 코드에 ToyBase 프로퍼티가 반복되고 있다. 이를 각 유니온 파트의 기본으로 삼으면 더 좋을 것이다.
-// 인터섹션 형식을 사용해 이를 해결한다.
-    type ToyBase2 = {
-        name: string;
-        price: number;
-        quantity: number;
-        minimumAge: number;
-    };
-
-    type BoardGame2 = ToyBase2 & {
-        players: number;
-    };
-
-    type Puzzle2 = ToyBase2 & {
-        pieces: number;
-    };
-
-    type Doll2 = ToyBase2 & {
-        meterial: string;
-    };
-
-// 유니온 형식이 합집합이라면 인터섹션 형식은 교집랍에 해당한다.
-// 인터섹션 형식은 두 형식 모두에 있는 프로퍼티만 포함(하위 형식 포함)하므로 더 좁은 값의 집합이다.
-
-// 이처럼 ts를 이용해 효과적인 데이터 모델을 만들 수 있을 뿐 아니라 ts는 추가 기능도 제공한다.
-// ts에서는 리터럴값을 리터럴 형식으로 표현할 수 있다.
-// 예를 들어 숫자 1이라는 형식을 정의할 수 있는데, 이는 오직 1이라는 값과 호환되는 방식이다.
-    type One = 1;
-    const one: One = 1;
-    const two: One = 2; // 다른 값은 할당할 수 없음
-
-// 여러 리터럴 형식을 유니온으로 만들 때 유니온 형식을 활용할 수 있다
-// 예를 들어 Doll3 형식이 있다고 가정할 때 명시적으로 meterail 값을 설정할 수 있다.
-    type Doll3 = ToyBase2 &{
-        material: "plush" | "plastic";
-    };
-
-    function checkDoll(doll: Doll3){
-        if(doll.material === "plush"){
-            /// ...
-        }else{
-            /// ...
-        }
-    }
+}
