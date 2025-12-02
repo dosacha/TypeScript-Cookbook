@@ -15,107 +15,80 @@ type Triangle = {
     kind: "Triangle";
 };
 
-type Rectangle = {
-    x: number;
-    y: number;
-    kind: "Retangle";
-};
+type Shape = Circle | Square | Triangle;
 
-type Shape = Circle | Square | Triangle | Rectangle;
+// ts에서 리터럴 형식은 특정 값을 가리킬 수 있을 뿐 아니라 형식 시스템의 기능에 중요한 기여를 한다.
+// let이나 const로 기본 형식의 값을 할당할 때 이 점이 명확하게 드러난다.
 
-// 모든 가능한 옵션을 확인한 다음에 default 케이스에서 오류를 던지는데, 코드의 형식이 제대로 동작한다면 이 오류가 발생하지 않는다.
-// 형식 시스템조차도 default 케이스는 불가능함을 알려준다. default케이스에 shape를 추가한 다음 그 위로 마우스를 대보면 ts는 shpae의 형식이 never라고 알려준다.
-// never는 흥미로운 형식이다. never는 ts의 '바닥 형식'으로, 형식 계층의 가장 아래에 위치한다.
-// 어떤 값이 never라면 이는 오류가 발생했다는 의미다.
-    function area(shape: Shape){
-        switch(shape.kind){
-            case "Circle":
-                // ...
-                break;
-            case "Square":
-                // ...
-                break;
-            case "Triangle":
-                // ...
-                break;
-            case "Retangle":
-                // ...
-                break;
-            default:
-                console.error("Shape not defined:", shape); // shape는 never
-                throw Error("not possible");
-        }
+// let, const로 선언한 변수에 값을 두 번 할당하면 ts는 이를 두 가지 다른 형식으로 추론한다.
+// let을 사용했다면 ts는 기본형을 넓히는 방향으로 추론한다.
+    let name = "Stefan"; // name은 문자열
+// const를 사용했다면 ts는 정확히 해당 리터럴 형식을 추론한다.
+    const name2 = "Stefan"; // name은 "Stefan"
+
+// 객체 형식에서는 상황이 조금 달라진다.
+// let과 const 모두 넓히는 방향으로 형식을 추론한다.
+    let person = {name: "Stefan"}; // {name: string}
+    const perason2 = {name: "Stefan"}; // {name: string}
+
+// 이는 js의 동장 방식과 관련이 있다. js는 객체를 상수로 바인딩했으며 이는 person을 다시 할당할 수 없는 의미다.
+// 하지만 여전히 객체의 프로퍼티는 바꿀 수 있다.
+    const perason3 = {name: "Stefan"};
+    perason3.name = "Not Stefan"; // 동작함
+
+// js가 어떻게 동작하는지를 생각해보면 이는 이치에 맞는다. 
+// 다만, 데이터 모델을 정교하게 처리하고 싶은 상황에서 문제가 야기될 수 있다.
+// 데이터에 리터럴을 사용하면 ts는 넓은 집합을 추론하는데, 그러면 정의한 형식과 호환되지 않는 값을 허용하게 된다.
+    function area(shpae: Shape){
+        // ...
     }
 
-// ts는 모든 시점에 특정 값의 형식을 정확하게 파악한다.
-// default 분기에서 shpae는 Rectangle 형식일 수밖에 없다.
-    function area2(shape: Shape){
-        switch(shape.kind){
-            case "Circle":
-                // ...
-                break;
-            case "Square":
-                // ...
-                break;
-            case "Triangle":
-                // ...
-                break;
-            default:
-                console.error("Shape not defined:", shape); // shape는 Rectangle
-                throw Error("not possible");
-        }
-    }
+    const Circle = {
+        radius: 2,
+        kind: "Circle",
+    };
 
+    area(Circle);
+    //   ^- '{ radius: number; kind: string; }' 형식의 인수는 'Shape' 형식의 매개 변수에 할당될 수 없습니다.
+    //      '{ radius: number; kind: string; }' 형식은 'Circle' 형식에 할당할 수 없습니다.
+    //      'kind' 속성의 형식이 호환되지 않습니다.
+    //      'string' 형식은 '"Circle"' 형식에 할당할 수 없습니다.ts(2345)
 
-// 여러 장소에서 완전 검사 패턴을 사용하기 시작하면 상황이 악화된다.
-// 특정 케이스 검사를 쉽게 놓칠 수 있으며 이는 소프트웨어 충돌로 이어질 수 있기 때문이다.
-// 모든 선택 사항을 완벽하게 검사했는지 확인하는 헬퍼 함수를 만들어 이 문제를 해결할 수 있다.
+// 문제 해결 방법
+// 1. 형식을 식별하도록 명시적으로 애너테이션을 사용
+    // 정확한 형식
+    const circle2: Circle = {
+        radius: 2,
+        kind: "Circle",
+    };
+    area(circle2);
 
-// 보통 never는 일어나지 말아야 할 상황이 발생했음을 암시한다.
-// 위에서는 never를 함수의 형식 에너테이션으로 사용했다. '대체 어떤 값을 함수 인수로 전달해야 하는 걸까?'라는 궁금증이 생길 것이다.
-// 이 함수에는 어떤 값도 인수로 전달할 수 없다. 이 함수를 호출하지 않는 것이 정상이다.
-// 하지만 기존의 default 케이스를 assertNever로 바꾸어 형식 시스템이 모든 호환 가능한 값을 확인하도록 강제할 수 있다.
-function assertNever(value: never){
-    console.error("Unknown value", value);
-    throw Error("Not possible");
-};
+    // 넓힌 집합
+    const circle3: Shape = {
+        radius: 2,
+        kind: "Circle",
+    };
+    area(circle3);
+// 2. 형식 애너테이션 대신 할당문 끝에 형식 어서션을 추가
+    // 형식 어서션
+    const circle4 = {
+        radius: 2,
+        kind: "Circle",
+    } as Circle;
+    area(circle4);
 
-// 사용할 수 있는 모든 선택 사항을 완벽하게 검사하지 않으면 물결선이 나타난다.
-    function area3(shape: Shape){
-        switch(shape.kind){
-            case "Circle":
-                // ...
-                break;
-            case "Square":
-                // ...
-                break;
-            case "Triangle":
-                // ...
-                break;
-            default:
-                assertNever(shape);
-            //  ^- 'Rectangle' 형식의 인수는 'never' 형식의 매개 변수에 할당될 수 없습니다.ts(2345)
-        }
-    }
+    // 하지만 더 많은 정보를 포함하는 리터럴을 서로 다른 장소애서 다른 의미로 사용할 때 애너테이션으로는 제한이 생길 수 있다.
+    // 그럴 때 어서션을 더 정교하게 활용하여 전체 객체가 아닌 각 프로퍼티를 특정 형식으로 특정한다.
+    const circle5 = {
+        radius: 2,
+        kind: "Circle" as "Circle",
+    };
+    area(circle5);
+// 3. const 컨텍스트를 이용해 정확한 값을 특정
+    const circle6 = {
+        radius: 2,
+        kind: "Circle" as const,
+    };
+    area(circle6);
+    // 이 떄 const 컨텍스트를 전체 객체에 사용하면 객체는 읽기 전용이 되므로 바꿀 수 없게 되므로 주의해야 한다.
 
-// ts가 모든 상황을 검사하도록 강제하므로 Retangle이라는 새로운 클래스를 추가할 때 함께 바꿔야 할 모든 코드를 쉽게 확인할 수 있다.
-function area4(shape: Shape){
-        switch(shape.kind){
-            case "Circle":
-                // ...
-                break;
-            case "Square":
-                // ...
-                break;
-            case "Triangle":
-                // ...
-                break;
-            case "Retangle":
-                /// ...
-                break;
-            default: // shpae는 never
-                assertNever(shape); // shpae를 assertNever로 전달할 수 있음!!
-        }
-    }
-
-// 이 함수는 코드의 품질을 높이는 데 도움을 준다.
