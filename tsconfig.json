@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
+    "strictNullChecks": true,
     "skipLibCheck": true,
     "target": "esnext",
     "module": "NodeNext",
