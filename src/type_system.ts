@@ -1,73 +1,75 @@
 // type_system.ts
 
-import { futimesSync } from "fs";
+// js와 ts의 catch 구문을 지정하는 방법에는 큰 차이가 있다.
+// 예를 들어, 특정 오류를 잡으려 하면 ts는 오류를 일으킨다.
 
-// JS의 void
-// 1. void는 옆에 등장하는 표현식이 undefined를 반환하도록 평가한다.
-// 2. 정의와 동싱에 실행되는 함수를 호출할ㄷ 때 void를 활용한다
-// 3. void는 항상 undefined를 반환하며 옆의 식을 평가하므로 값을 반환하지 않고 콜백을 호출하는 함수를 반환하도록 할 수 있다.
-
-// ts의 void는 undefined의 하위 형식이다.
-// js의 함수는 항상 무언가를 반환한다. 명시적으로 값을 반환하든지 암묵적으로 undefined를 반환하는 식이다.
-    function iHaveNoReturnValue(i){
-        console.log(i);
+// Axios를 사용해서 어떻게 이런 문제가 발생하는지 알아보자
+import { rejects } from 'assert';
+import axios, { AxiosError } from 'axios';
+import { platform } from 'os';
+    try{
+        // Axios 같은 유명한 라브러리로 필요한 작업 수행
+    }catch(e: AxiosError){
+        //    ^^^^^^^^^^^ 지정한 경우 catch 절 변수 형식 주석은 'any' 또는 'unknown'이어야 합니다.ts(1196)
     }
 
-    let check = iHaveNoReturnValue(2);
-    // check는 undefined
+// 이처럼 동작하는 몇 가지 이유가 있다
 
-    type Fn = typeof iHaveNoReturnValue;
-    // type Fn = (i: any) => void
+// 1. 모든 형식을 던질 수 있음(js에서는 모든 표현식을 던질 수 있다.)
+// 모든 유효한 값을 던질 수 있으므로 catch에서 받을 수 있는 값은 이미 Error의 하위 형식보다 넓게 설정된다.
+    throw "What a weird error"; // 동작함
+    throw 404; // 동작함
+    throw new Error("What a weird error"); // 동작함
 
-// 매개변수나 그 밖의 다른 모든 선언에도 void를 형식으로 사용할 수 있다. 
-// 그러면 오직 undefined만을 유효한 값으로 받는다.
-    function iTakeNoParameters(x: void): void{
-        iTakeNoParameters(); // 동작함
-        iTakeNoParameters(undefined) // 동작함
-        iTakeNoParameters(void 2) // 동작함
+// 2. js에서는 오직 한 개의 catch 구문만 추가할 수 있음
+// js에서는 try구문 하나에 오직 한 개의 catch 구문을 추가할 수 있다,
+// 모든 가능한 값을 던질 수 있으며 try 구문당 한 개의 catch 구문만 추가할 수 있으므로 e의 형식 범위는 정말 넓다.
+    try{
+        myroutine(); // 다양한 오류가 여기서 발생
+    } catch (e) {
+        if (e instanceof TypeError) {
+            // TypeError
+        } else if (e instanceof RangeError) {
+            // RangeError
+        } else if (e instanceof EvalError) {
+            // EvalError
+        } else if (typeof e === "string") {
+            // 문자열 오류
+        } else if (axios.isAxiosError(e)) {
+            // axios가 자동으로 오류 검사를 해주지는 않는다
+        } else {
+            // 그 밖의 조건
+            logMyErrors(e);
+        }
     }
 
-// void와 undefined는 아주 많이 비슷하지만 중요한 차이점이 존재한다.
-// 반환 형식으로 사용한 void는 다른 형식으로 치환할 수 있으므로 추가 콜백 패턴읋 활용할 수 있다.
-// 예시로 fectch 함수는 숫자 집합을 받아 결과를 콜백 함수의 매개변수로 전달한다.
-    function fetchResults(
-        callback: (statusCode: number, results: number[]) => void
-    ){
-        // ...
-        callback(200, results);
-    }
+// 3. 어떤 예외든 발생할 수 있음
+// 어떤 오류든 발생할 수 있다면 '던질 수 있는' 모든 값의 유니온 형식을 만들면 어떨끼? >> 이론적으론 가능하지만, 사실 현재로서 예외의 형식을 알 수 없다.
+// 사용자 정의 예외와 오류 이외에 시스템이 던지는 오류도 있다. (형식이 불일치하거나 한 함수가 undefined일 때)
+// 가능한 값은 많고 catch 구문은 하나뿐이며 발생할 수 있는 오류도 많으므로 e의 형식은 any와 unknown 두 가지 후보로 좁혀진다.
+// Promise를 거절할 때는 모든 이유가 적용된다. ts에서는 Promise가 실현되었을 때만 형식을 지정할 수 있다.
+    const somePromise = () =>
+        new Promise((fulfil, reject) => {
+            if(someConditionIsValid()) {
+                fulfil(42);
+            } else {
+                reject("Oh no!");
+            }
+        });
+    
+    somePromise()
+    .then((val) => console.log(val)) // val은 number
+    .catch((e) => console.log(e)); // 어떤 형식이든 가능함
 
-// callback 함수와 호환되는 인수를 fecthResults의 callback 함수로 설정해 호출할 수 있다.
-    function normalHandler(statusCode: number, results: number[]): void{
-        // ...
-    }
+// 같은 Promise를 async/wait 흐름에서 호출하면 조금 더 명확해진다
+        try {
+            const z = await somePromise(); // z는 number
+        } catch(e) {
+            // 마찬가지로 e는 어떤 형식이든 가능함
+        }
 
-    fetchResults(normalHandler);
-
-// 반환 형식을 void로 설정하면 반환 형식이 조금 더 구체적인 다양한 함수를 이용할 수 있다.
-    function handler(statusCode: number): boolean{
-        // ...
-        return true;
-    }
-
-    fetchResults(handler); // 문제없이 컴파일됨
-
-// 코드는 컴파일 되지만 다음처럼 함수 시그니처가 일치하지 않는다.
-// 첫째, 시그니처에 더 짧은 인수 목록을 제공할 수 있다.
-// : js는 초과 매개변수가 있어도 함수를 호출하는 데 문제가 없으며, 이들을 그저 무시한다. 필요한 매개변수보다 더 많은 매개변수를 유지할 필요가 없기 때문이다.
-// 둘째, 반환 형식은 boolean이지만 ts는 여전히 이 함수를 전달한다.
-// : 이 상황에 void 형식을 이용하면 조금 더 편리하다. fetchResults는 콜백을 호출할 때 반환값을 기대하지 않는다. 따라서 형식 시스템의 입장에서 콜백의 반환값은 여전히 undefined다.
-
-// 형식 시스템이 반환값을 사용하지 못하게 하는 한 코드는 안전하다.
-    function fetchResults2(
-        callback: (statusCode: number, results: number[]) => void
-    ){
-        // ...
-        const didItWork = callback(200, results);
-        // didItWork는 boolean 'handler'이지만
-        // 형식 시스템 입장에서는 'undefined'다
-    }
-
-// 덕분에 반환 형식이 다양한 콜백을 전달할 수 있다. 콜백이 무언가를 반환하더라도 이는 사용되지 않으며 void로 전달된다.
-// 콜백 함수로부터 반환값이 필요 없는 상황이라면 무엇이든 콜백으로 사용할 수 있다.
-// ts는 이를 "대체성"이라 부르며, 의미상 문제가 없다면 무언가를 다른 것으로 대체할 수 있는 능력을 가리킨다.
+// 자신만의 오류를 정의해서 잡고 싶다면 오류 클래스를 구현한 다음 instanceof 검사를 수행하거나 특정 프로퍼티를 검사하는 헬퍼 함술르 만들어 형식 찬반형으로 올바른 형식을 확인할 수 있다.
+// Axios의 좋은 예
+        function isAxiosError(payload: any): payload is AxiosError {
+            return payload !== null && typeof payload === 'object' && payload.isAxiosError;
+        }
