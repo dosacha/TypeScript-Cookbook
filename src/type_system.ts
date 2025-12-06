@@ -1,78 +1,174 @@
 // type_system.ts
-type Dice = 1|2|3|4|5|6;
 
-// 아래 함수의 연산 결과는 number인데 이는 범위가 넓다
-    function rollDice(): Dice{
-        let num = Math.floor(Math.random()*6) + 1;
-        return num;
-    // ^ 'number' 형식은 'Dice' 형식에 할당할 수 없습니다.ts(2322)
+// 관리하는 모든 웹사이트의 성능을 평가한다고 가정하자.
+// 다음처럼 성능 지표를 모은 다음 도메인명으로 그룹화한다
+    const timings = {
+        "fettblog.eu": {
+            ttfb: 300,
+            fcp: 1000,
+            si: 1200,
+            lcp: 1500,
+            tti: 1100,
+            tbt: 10,
+        },
+        "typescript-cookbook.com": {
+            ttfb: 400,
+            fcp: 1100,
+            si: 1100,
+            lcp: 2200,
+            tti: 1100,
+            tbt: 0,
+        }
     }
 
-// number는 Dice에서 허용하는 것보다 더 많은 수를 포함하므로 함수 시그니처에 애너테이션을 추가한다고 해서 형식이 좁혀지진 않는다.
-// 이 방법은 형식 넓히기(즉, 상위형식)에만 적용되기 때문이다
-    function asNumber(dice: Dice): number{
-        return dice;
-    }
-
-// 대신 형식 찬반형에서처럼 어서션으로 예상보다 형식을 좁힐 수 있다
-    function rollDice2(): Dice {
-        let num = Math.floor(Math.random() * 6) +1;
-        return num as Dice;
-    }
-
-// 형식 찬반형과 마찬가지로 형식 어서션은 추론된 형식의 상위 형식으로만 동작한다.
-// 값은 더 넓은 사우이 형식이나 좁은 하위 형식으로 설정할 수 있으나 ts는 집합을 바꾸도록 허용하진 않는다.
-    function asString(num: number): string{
-        return num as string;
-    //        ^- 'number' 형식을 'string' 형식으로 변환한 작업은 실수일 수 있습니다. 두 형식이 서로 충분히 겹치지 않기 때문입니다. 의도적으로 변환한 경우에는 먼저 'unknown'으로 식을 변환합니다.ts(2352)
-    }
-
-// 객체의 프로퍼티를 모을 때도 어서션이 등장한다.
-    type Person = {
-        name: string;
-        age: number;
-    };
-
-    function createDemoPerson(name: string) {
-        const person = {} as Person;
-        person.name = name; person.age = Math.floor(Math.random() * 95);
-        return person;
-    }
-
-// 프로퍼티를 설정하는 일은 잊어버릴 수 있으며 이런 일이 일어나도 ts는 아무 경고도 하지 못하므로 이는 "안전하지 않은" 동작이다.
-// 심지어 Person이 바뀌고 더 많은 프로퍼ㅏ티가 생겨도 이와 관련한 아무 소식도 듣지 못한다.
-    type Person2 = {
-        name: string;
-        age: number;
-        profession: string;
-    };
-
-    function createDemoPerson2(name: string) {
-        const person = {} as Person;
-        person.name = name; person.age = Math.floor(Math.random() * 95);
-        // progession은 어디에?
-        return person;
-    }
-
-// 이런 상황에서는 "안전하게" 객체를 만드는 방법을 선택하는 편이 좋다.
-// 모든 것에 애너테이션을 추가할 수 ㅇ맀으므로 모든 필수 프로퍼티를 설정하도록 강제한다.
-    function createDemoPerson3(name: string) {
-        const person: Person = {
-            name,
-            age: Math.floor(Math.random() * 95),
+// 주어진 지표에서 타이밍값이 가장 작은 도메인을 찾으려면 모든 키를 루프로 반복하면서 각 지표 항목을 비교하는 함수를 만들어야 한다.
+    function findLowestTiming(collection, metric) {
+        let result = {
+            domain: "",
+            value: Number.MAX_VALUE,
         };
-        return person;
+        for (const domain in collection) {
+            const timing = collection[domain];
+            if(timing[metric] < result.value) {
+                result.domain = domain;
+                result.value = timing[metric];
+            }
+        }
+        return result.domain;
     }
 
-// 형식 어서션보다 형식 애너테이션이 더 안전하지만 rollDice처럼 어쩔 수 없는 상황도 있다.
-// 다른 ts 시나리오에서는 다른 선택을 할 수 있겠지만, 애너테이션을 할 수 있는 상황에도 형식 어서션을 선호할 수 있다.
-// 예를 들어, fetch API를 사용해 JSON 데이터를 가져오는 상황에서 fetch를 호출한 다음 애너테이션된 형식에 결과를 할당한다.
-    const ppl: Person[] = await fetch("/api/people").then((res) => res.json());
+// 적절하게 함수에 형식을 추가해 불필요한 지표 자료를 전달하지 않도록 한다
+    type Metrics = {
+        // 최초 바이트까지 걸린 시간
+        ttfb: number;
+        // 최초의 만족스러운 페인트
+        fcp: number;
+        // 속도 인덱스
+        si: number;
+        // 가장 큰 페인트
+        lcp: number;
+        // 상호 동작 시간
+        tti: number;
+        // 총 블록 시간
+        tbt: number;
+    };
 
-// res.json()의 결과는 any이며, any는 형식 애너테이션을 이용해 다른 모든 형식으로 바꿀 수 있다.
-// 결과가 Person[]라는 보장은 할 수 없다. 결과를 Person[]으로 어서션해 형식을 구체화하도록 이 코드를 다시 구현한다
-    const ppl2 = await fetch("/api/people").then((res) => res.json()) as Person[];
+// 키 집합으로 구성된 자료의 모양을 정의하기는 쉽지 않으므로 ts는 "인덱스 시그니처"라는 도구를 제공한다
+// ts에 어떤 프로퍼티명이 있는지 모르지만, string 형식이 존재한다고 알리며 이는 Metrics를 가리킴을 지시한다.
+    type MetricCollection = {
+        [domain: string]: Timings;
+    };
 
-// 형식 시스템의 입장에서는 같은 의미지만 문제가 생겼을 때 이 코드를 이용하면 더 쉽게 문제의 위치를 파악할 수 있다.
-// "/api/people"의 모델이 바뀌면 어떻게 될까? 애너테이션만 이용했다면 이런 상황에서 발생하는 문제를 빨리 파악하기 어렵다.
-// 여기서 어서션은 "안전하지 않은" 동작이 있음을 가리킨다.
+// 이제 findLowestTiming의 형식을 지정한다. 컬렉션의 형식을 MetricCollection으로 지정했으며 Metrics의 키를 두 번째 매개변수로 전달한다
+    function findLowestTiming2(
+        collection: MetricCollection,
+        key: keyof Metrics
+    ): string {
+        let result = {
+            domain: "",
+            value: Number.MAX_VALUE,
+        };
+        for (const domain in collection) {
+            const timing = collection[domain];
+            if(timing[key] < result.value) {
+                result.domain = domain;
+                result.value = timing[key];
+            }
+        }
+        return result.domain;
+    }
+
+// 코드는 잘 동작하지만 약간 문제가 있다.
+// ts는 모든 문자열의 프로파티를 읽도록 허용하지만 프로퍼티를 실제 이용할 수 있는지는 검사해주지 않으므로 주의하자.
+    const emptySet: MetricCollection = {};
+    let timing = emptySet["typescript-cookbook.com"].fcp * 2; // 형식 오류 발생하지 않음!
+
+// 인덱스 시그니처를 Metrics나 undefined로 정의하는 편이 더 현실적인 표현 방법이다.
+// 이는 모든 가능한 문자열을 인덱스하지만 이때 값이 없을 수도 있음을 가리키기 때문이다.
+    type MetricCollection2 = {
+        [domain: string]: Metrics | undefined;
+    };
+
+    function findLowestTiming3(
+        collection: MetricCollection2,
+        key: keyof Metrics
+    ): string {
+        let result = {
+            domain: "",
+            value: Number.MAX_VALUE,
+        };
+        for (const domain in collection) {
+            const timing = collection[domain]; // Metrics | undefined
+            // undefined 값에 대응한 추가 검사
+            if(timing && timing[key] < result.value) {
+                result.domain = domain;
+                result.value = timing[key];
+            }
+        }
+        return result.domain;
+    }
+
+// Metrics나 unedfined 값은 사라진 프로퍼티와는 다르지만 상황이 완전 다르지는 않다.
+// domain을 string으로 설정하지 말고 "매핑된 형식"이라 불리는 일종의 string 하위 집합으로 설정하므로 ts에 키가 선택형임을 지시할 수 있다
+    type MetricCollection3 = {
+        [domain in string]?: Metrics;
+    };
+
+// string, number, symbol, 매핑된 형식을 포함한 이들의 모든 하위 형식을 "인덱스 시그니처" 정의에 사용할 수 있다.
+    type Thorws = {
+        [x in 1|2|3|4|5|6]: number;
+    }
+
+// 형식에 프로퍼티도 추가할 수 있다.
+    type ElementCollection = {
+        [y: number]: HTMLElement | undefined;
+        get(index: number): HTMLElement | undefined;
+        length: number;
+        filter(csllback: (element: HTMLElement) => boolean): ElementCollection;
+    }
+
+// 인덱스 시그니처와 다른 프로퍼티를 합쳤다면 인덱스 시그니처를 넓힌 집합이 특정 프로퍼티의 형식을 포함해야 한다.
+// 앞선 예제에서 number 시그니처와 다른 프로퍼티 string 키 사이에 겹치는 부분이 없다.
+// 하지만 문자열을 string으로 매핑하는 인덱스 시그니처를 정의한 다음 number 형식의 count 프로퍼티를 정의하면 오류가 일어난다.
+// >>> 'count' 자체가 string 형식이기에 string키로써 취급이 된다. 따라서 count키에 :string값이 와야만 한다.
+    type StringDictionary = {
+        [index: string]: string;
+        count: number;
+    //  ^- 'count' 형식의 'number' 속성을 'string' 인덱스 유형 'string'에 할당할 수 없습니다.ts(2411)
+    }
+
+// 이 오류를 없애려면 모든 프로퍼터이의 형식을 허용하도록 인덱스 시그니처의 형식을 넓혀야 한다.
+// 이렇게 count는 인덱스 시그니처와 프로퍼티 형식 모두의 하위 집합이다.
+type StringDictionary2 = {
+        [index: string]: string|number;
+        count: number; // 동작함.
+    };
+
+// 인덱스 시그니처 [index: number] 는 “number 키뿐 아니라 string 키도 포함”한다.
+// 왜냐하면 JS 객체는 결국 숫자 키도 string 으로 저장되기 때문이다.
+// 즉, TS 입장에서 다음 두 가지는 둘 다 number 인덱스 시그니처의 대상이다:
+
+    type StringDictionary3 = {
+        [index: number]: string;
+        "1": string;
+    }
+
+    type StringDictionary4 = {
+        [index: number]: string;
+        1: string;
+    }
+
+// JS 객체는 숫자 키도 string으로 저장되기에 아래 타입도 정상적으로 작동한다.
+    type StringDictionary5 = {
+        [index: string]: string;
+        1: string;
+    }
+
+    type StringDictionary6 = {
+        [index: string]: string;
+        "1": string;
+    }
+
+    // 요약
+    // - string 인덱스 시그니처: 숫자 키 + 모든 string 키 포함  ( TS는 JS의 “숫자 키는 내부적으로 string으로 저장된다”는 규칙을 알고 있기 때문 )
+    // - number 인덱스 시그니처: 숫자 키 + 숫자 모양의 string 키 포함 ( number 인덱스로 접근 가능한 string 키는 number 인덱서 규칙에 포함 )
