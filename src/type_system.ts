@@ -1,78 +1,37 @@
 // type_system.ts
 
-// 같은 기본 형식의 집합을 값으로 갖는 두 가지 다른 형식이 있다면 문제가 생긴다
-// ts는 형식 시스템 안에서 명목상 형식 지원을 흉내 내며 더 높은 보안성을 제공한다
+// 콘텐츠 관리 시스템에 접근하는 API를 가정.
+    type Entry = { /* 개발 중 */ };
 
-// 1.감싸는 클래스 (값을 직접 사용하지 않음)
-    class Balance {
-        private kind = "balance";
-        value: number;
-
-        constructor(value: number){
-            this.value = value;
-        }
+    function retrieve(contentType: string): Entry[] {
+        // 개발 중
+        return [];
     }
 
-    class AccountNumber {
-        private kind = "account";
-        value: number;
+// 문자열로 유니온을 만들고 미리 정의한 콘테츠 형식을 포함하는 목록을 보여주는 헬퍼 형식
+    type Entry = { /* 개발 중 */ };
 
-        constructor(value: number){
-            this.value = value;
-        }
-    }
-    // private나 protect 멤버가 있으면 ts는 같은 선언으로부터 이 두 멤버가 왔을 때만 호환된다고 간주한다
+    type contentType = "post"|"page"|"asset"|string;
 
-// 2. void형식인 _nominal 사용 (사용할 수 없는 멤버를 추가해 클래스를 분리)
-    class Balance {
-        private _nominal: void = undefined;
-        value: number;
-
-        constructor(value: number){
-            this.value = value;
-        }
+    function retrieve(content: contentType): Entry[] {
+        // 개발 중
+        return [];
     }
 
-    class AccountNumber {
-        private _nominal: void = undefined;
-        value: number;
+    // post, page, asset등은 string의 하위 형식이므로 넓은 집합으로 삼켜진다
+    retrieve("") // retrieve(contentType: string): Entry[]
 
-        constructor(value: number){
-            this.value = value;
-        }
+// 빈 객체 형식 {}과 string의 인터섹션을 통해 자동완성 정보를 유지하고 리터럴 형식을 보존할 수 있다
+    type contentType2 = "post"|"page"|"asset"|string & {};
+    // 인터섹션은 ContentType과 호환되는 값의 수를 바꾸지 않지만, 
+    // ts가 하위 형식을 줄이지 못하게 하고 리터럴 형식을 보존하도록 설정한다
+
+    function retrieve2(content: contentType2): Entry[] {
+        // 개발 중
+        return [];
     }
+    
+    retrieve2("") // 이제 ContentType은 string으로 줄어들지 않는다
 
-    const account = new AccountNumber(12345678);
-    const balance = new Balance(10000);
-
-    function acceptBalance(balance: Balance) { /* ... */ }
-
-    acceptBalance(balance); // 동작함
-    acceptBalance(account);
-    // ^'AccountNumber' 형식의 인수는 'Balance' 형식의 매개 변수에 할당될 수 없습니다.
-    //   형식에 별도의 프라이빗 속성 '_nominal' 선언이 있습니다.ts(2345)
-
-// kind 프로퍼티를 포함하는 객체 형식으로 기본 형식의 인터섹션을 만들어 명목상 형식을 흉내내는 방법도 있음
-// 이렇게 하면 원래 형식의 모든 동작을 그대로 유지하지만, 다르게 사용하려면 형식 어서션으로 ts에 알려야 함
-    type Credits = number & { _kind: "credits" };
-    type AccountNumber = number & { _kind: "accountNumber" };
-
-    const account = 12345678 as AccountNumber;
-    let balance = 10000 as Credits;
-    const amount = 3000 as Credits;
-
-    function increase(balance: Credits, amount: Credits): Credits {
-        return (balance + amount) as Credits;
-    }
-
-    balance = increase(balance, amount); // 동작함
-    balance = increase(balance, account);
-    // ^ 'AccountNumber2' 형식의 인수는 'Credits' 형식의 매개 변수에 할당될 수 없습니다.
-    //   'AccountNumber2' 형식은 '{ _kind: "credits"; }' 형식에 할당할 수 없습니다.
-    // '_kind' 속성의 형식이 호환되지 않습니다.
-    //   '"accountNumber"' 형식은 '"credits"' 형식에 할당할 수 없습니다.
-
-// balance와 amount는 원래 의도 대로 동작하지만 다시 숫자를 생성함에 주목하자.
-// 따라서 다른 어서션을 추가해야 함
-    const result = balance + amount; // result는 number
-    const credits = (balance + amount) as Credits; // credits은 Credits
+    // 여전히 모든 문자열은 ContentType의 유효한 값이다.
+    // 단지 API를 사용하는 개발자에게 힌트를 제공해서 개발자 경험을 바꾸었을 뿐이다.
